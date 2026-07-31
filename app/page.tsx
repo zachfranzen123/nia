@@ -163,7 +163,7 @@ export default function Home() {
           </div>
           <img
             className="nia-photo"
-            src={reaction === "rest" ? "/nia-rest.png" : "/nia-sit.png"}
+            src={reaction === "rest" ? "/nia-rest.png" : "/nia-sit-full.png"}
             alt="Nia, a very good German shepherd"
           />
           <img className="boop-photo" src="/nia-boop.png" alt="" aria-hidden="true" />

@@ -49,7 +49,7 @@ h1 span { display:block; }
 .toy-shell { position:absolute; inset:25px -15px 0; background:var(--stage); border:15px solid var(--pink); border-radius:48% 48% 15% 15%; box-shadow:inset 0 0 0 9px #fff,10px 12px #19162e; opacity:.78; }
 .theme-dialup .toy-shell { opacity:0; }
 .theme-vhs .toy-shell { border:0; background:radial-gradient(circle,rgba(255,45,178,.28),transparent 66%); box-shadow:none; }
-.nia-photo { position:relative; z-index:3; width:min(100%,520px); max-height:590px; object-fit:contain; object-position:center bottom; filter:drop-shadow(0 0 7px white) drop-shadow(7px 7px 0 white) drop-shadow(14px 14px 0 var(--pink)) drop-shadow(19px 19px 0 #090017); transform-origin:50% 80%; animation:nia-idle 2.6s steps(3,end) infinite; }
+.nia-photo { position:relative; z-index:3; width:min(100%,520px); max-height:620px; object-fit:contain; object-position:center bottom; filter:drop-shadow(0 0 7px white) drop-shadow(7px 7px 0 white) drop-shadow(14px 14px 0 var(--pink)) drop-shadow(19px 19px 0 #090017); transform-origin:50% 80%; animation:nia-idle 2.6s steps(3,end) infinite; }
 .boop-photo { position:absolute; z-index:6; width:155px; right:-34px; bottom:18px; transform:rotate(10deg); filter:drop-shadow(0 0 4px white) drop-shadow(8px 8px var(--pink)); clip-path:circle(47%); }
 .theme-vhs .boop-photo { display:none; }
 .spark { position:absolute; z-index:5; color:var(--yellow); font-size:62px; text-shadow:3px 3px var(--pink); animation:twinkle 1.7s steps(2,end) infinite; }
