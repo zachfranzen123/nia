@@ -14,13 +14,15 @@ button:focus-visible, a:focus-visible { outline:4px solid white; outline-offset:
 .theme-vhs { --page-bg:#090014; --text:#fff; --panel:#2a0755; --accent:#ff2db2; --accent2:#00e5ff; --stage:#090014; --headline:#d9efff; }
 .scanlines { display:none; pointer-events:none; position:fixed; inset:0; z-index:90; opacity:.22; background:repeating-linear-gradient(0deg,transparent 0 3px,rgba(0,0,0,.3) 3px 5px); }
 .theme-vhs .scanlines { display:block; }
-.topbar { height:76px; display:grid; grid-template-columns:auto 1fr auto auto; gap:20px; align-items:center; padding:10px 28px; color:white; background:#090017; border-bottom:5px solid var(--cyan); position:relative; z-index:20; }
+.topbar { min-height:76px; display:grid; grid-template-columns:auto 1fr auto auto auto; gap:14px; align-items:center; padding:10px 28px; color:white; background:#090017; border-bottom:5px solid var(--cyan); position:relative; z-index:20; }
 .logo { color:#fff; text-decoration:none; font:700 31px "Silkscreen"; text-shadow:4px 3px var(--pink); white-space:nowrap; }
 .logo span { color:var(--pink); }
 .live-pill { justify-self:center; border:2px solid var(--pink); padding:9px 18px; font:700 13px "Press Start 2P"; color:var(--yellow); box-shadow:inset 0 0 16px #6d28d9; white-space:nowrap; }
 .live-pill i, .now-playing i { width:10px; height:10px; display:inline-block; border-radius:50%; background:#29ff65; margin-right:8px; animation:blink 1s steps(2,end) infinite; }
-.wallet,.buy-top { border:3px solid white; color:white; background:#20113e; padding:10px 15px; font:700 13px "Press Start 2P"; box-shadow:4px 4px #000; white-space:nowrap; }
+.wallet,.buy-top,.sound-toggle { border:3px solid white; color:white; background:#20113e; padding:10px 15px; font:700 11px "Press Start 2P"; box-shadow:4px 4px #000; white-space:nowrap; }
 .buy-top { color:#090017; background:var(--yellow); border-color:#fff; }
+.sound-toggle { color:var(--cyan); }
+.sound-toggle[aria-pressed="true"] { color:#090017; background:var(--cyan); }
 .coin { background:var(--yellow); color:#111; border-radius:50%; padding:3px 6px; }
 .channel-switcher { min-height:49px; display:flex; align-items:center; justify-content:center; gap:9px; padding:7px 18px; background:#fff8df; color:#19162e; border-bottom:4px solid #19162e; font:700 12px "Silkscreen"; position:relative; z-index:12; }
 .channel-switcher button { border:2px solid #19162e; background:white; padding:7px 11px; box-shadow:3px 3px #19162e; }
@@ -85,16 +87,20 @@ h1 span { display:block; }
 .how-it-works { padding:80px 32px 95px; background:#090017; color:white; text-align:center; }
 .section-kicker { color:var(--cyan); font:700 13px "Press Start 2P"; }
 .how-it-works h2,.shop-modal h2 { margin:12px auto 35px; font:400 clamp(38px,5vw,70px)/1 "Bungee"; color:var(--pink); }
+.real-world-good { max-width:760px; margin:-16px auto 42px; font-size:21px; line-height:1.5; }
+.real-world-good strong { color:var(--yellow); }
 .steps { max-width:1150px; margin:auto; display:grid; grid-template-columns:repeat(3,1fr); gap:25px; }
 .steps article { position:relative; text-align:left; border:4px solid white; background:#2a0755; padding:28px; box-shadow:9px 9px var(--pink); }
 .steps article:nth-child(2) { background:#1338ff; box-shadow:9px 9px var(--cyan); }.steps article:nth-child(3) { background:#ff2db2; box-shadow:9px 9px var(--yellow); }
 .steps span { font:400 55px "VT323"; color:var(--yellow); }.steps h3 { font:700 17px "Press Start 2P"; }.steps p { font-size:17px; line-height:1.5; }
 footer { background:var(--yellow); color:#090017; text-align:center; padding:20px; font:700 12px "Press Start 2P"; }
 footer button { border:0; background:none; text-decoration:underline; font:inherit; }
+footer a { color:inherit; }
 
 .modal-backdrop { position:fixed; inset:0; z-index:100; display:grid; place-items:center; background:rgba(9,0,23,.82); backdrop-filter:blur(6px); padding:20px; }
 .shop-modal { width:min(900px,100%); max-height:94vh; overflow:auto; position:relative; background:#fff8df; color:#19162e; border:8px solid var(--pink); outline:5px solid white; box-shadow:16px 16px #090017; padding:38px; text-align:center; }
 .shop-modal h2 { margin-bottom:12px; }.shop-modal > p:not(.section-kicker) { margin:0 0 28px; }
+.shop-modal .token-good-note { margin:-12px auto 35px; max-width:650px; padding:13px; color:#090017; background:#ffd3ed; border:3px dashed var(--pink); font-weight:900; }
 .modal-close { position:absolute; top:12px; right:12px; width:44px; height:44px; border:3px solid #19162e; background:var(--yellow); color:#19162e; font:900 28px/1 "Nunito"; box-shadow:4px 4px #19162e; }
 .packs { display:grid; grid-template-columns:repeat(3,1fr); gap:18px; margin:24px 0; }
 .packs button { min-height:230px; position:relative; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px; border:5px solid #19162e; background:white; color:#19162e; box-shadow:8px 8px #19162e; }
@@ -124,14 +130,14 @@ footer button { border:0; background:none; text-decoration:underline; font:inher
 @keyframes marquee { to { transform:translateX(-50%); } }
 
 @media (max-width:1050px) {
-  .live-pill { display:none; }.topbar { grid-template-columns:1fr auto auto; }
+  .live-pill { display:none; }.topbar { grid-template-columns:1fr auto auto auto; }
   .hero,.theme-dialup .hero,.theme-vhs .hero { grid-template-columns:1fr 1fr; }
   .status-panel { grid-column:1/-1; grid-template-columns:repeat(3,1fr); }
   .theme-vhs .hero-copy { padding-top:0; }.theme-vhs .nia-stage { grid-column:auto; }
   .action-dock { grid-template-columns:1fr 1fr; }.now-playing { grid-column:1/-1; grid-row:2; }
 }
 @media (max-width:720px) {
-  .topbar { height:auto; grid-template-columns:1fr auto; padding:10px 14px; }.wallet { display:none; }.buy-top { font-size:10px; }.logo { font-size:24px; }
+  .topbar { height:auto; grid-template-columns:1fr auto; padding:10px 14px; }.wallet { display:none; }.buy-top,.sound-toggle { font-size:9px; padding:9px; }.sound-toggle { grid-row:2; grid-column:1/-1; }.logo { font-size:24px; }
   .channel-switcher { justify-content:flex-start; overflow-x:auto; }.channel-switcher > span { display:none; }.channel-switcher button { white-space:nowrap; }
   .hero,.theme-dialup .hero,.theme-vhs .hero { min-height:auto; display:flex; flex-direction:column; padding:55px 18px 10px; overflow:hidden; }
   .hero-copy { width:100%; }.theme-vhs .hero-copy { align-self:auto; }.new-burst { top:-38px; }

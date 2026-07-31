@@ -1,7 +1,7 @@
 "use client";
 /* eslint-disable @next/next/no-img-element, react-hooks/set-state-in-effect */
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 type Theme = "dialup" | "vhs" | "arcade";
 type Wallet = { tokens: number; globalPets: number; globalTreats: number };
@@ -18,6 +18,58 @@ const packs = [
   { id: "nia-whale", tokens: 50, price: "$7.99", note: "Unreasonable generosity" },
 ];
 
+const arcadeNotes = [261.63, 329.63, 392, 523.25, 392, 659.25, 523.25, 392];
+
+function playArcadePhrase(context: AudioContext) {
+  const start = context.currentTime;
+  arcadeNotes.forEach((frequency, index) => {
+    const oscillator = context.createOscillator();
+    const gain = context.createGain();
+    oscillator.type = index % 2 ? "square" : "triangle";
+    oscillator.frequency.value = frequency;
+    gain.gain.setValueAtTime(0.0001, start + index * 0.17);
+    gain.gain.exponentialRampToValueAtTime(0.035, start + index * 0.17 + 0.015);
+    gain.gain.exponentialRampToValueAtTime(0.0001, start + index * 0.17 + 0.13);
+    oscillator.connect(gain).connect(context.destination);
+    oscillator.start(start + index * 0.17);
+    oscillator.stop(start + index * 0.17 + 0.15);
+  });
+}
+
+function playBark(context: AudioContext, delay = 0, pitch = 150) {
+  const start = context.currentTime + delay;
+  const duration = 0.18;
+  const oscillator = context.createOscillator();
+  const oscillatorGain = context.createGain();
+  const noise = context.createBufferSource();
+  const noiseFilter = context.createBiquadFilter();
+  const noiseGain = context.createGain();
+  const buffer = context.createBuffer(1, Math.ceil(context.sampleRate * duration), context.sampleRate);
+  const channel = buffer.getChannelData(0);
+
+  for (let index = 0; index < channel.length; index += 1) channel[index] = Math.random() * 2 - 1;
+
+  oscillator.type = "sawtooth";
+  oscillator.frequency.setValueAtTime(pitch * 1.65, start);
+  oscillator.frequency.exponentialRampToValueAtTime(pitch, start + duration);
+  oscillatorGain.gain.setValueAtTime(0.0001, start);
+  oscillatorGain.gain.exponentialRampToValueAtTime(0.16, start + 0.012);
+  oscillatorGain.gain.exponentialRampToValueAtTime(0.0001, start + duration);
+  noise.buffer = buffer;
+  noiseFilter.type = "bandpass";
+  noiseFilter.frequency.value = 620;
+  noiseFilter.Q.value = 0.8;
+  noiseGain.gain.setValueAtTime(0.0001, start);
+  noiseGain.gain.exponentialRampToValueAtTime(0.28, start + 0.008);
+  noiseGain.gain.exponentialRampToValueAtTime(0.0001, start + duration);
+  oscillator.connect(oscillatorGain).connect(context.destination);
+  noise.connect(noiseFilter).connect(noiseGain).connect(context.destination);
+  oscillator.start(start);
+  oscillator.stop(start + duration);
+  noise.start(start);
+  noise.stop(start + duration);
+}
+
 export default function Home() {
   const [theme, setTheme] = useState<Theme>("arcade");
   const [wallet, setWallet] = useState<Wallet>({ tokens: 0, globalPets: 0, globalTreats: 0 });
@@ -25,6 +77,15 @@ export default function Home() {
   const [shopOpen, setShopOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [toast, setToast] = useState("NIA IS ONLINE");
+  const [musicOn, setMusicOn] = useState(false);
+  const audioContextRef = useRef<AudioContext | null>(null);
+  const musicTimerRef = useRef<number | null>(null);
+
+  const getAudioContext = useCallback(() => {
+    if (!audioContextRef.current) audioContextRef.current = new AudioContext();
+    if (audioContextRef.current.state === "suspended") void audioContextRef.current.resume();
+    return audioContextRef.current;
+  }, []);
 
   const loadWallet = useCallback(async () => {
     try {
@@ -60,6 +121,39 @@ export default function Home() {
     }
   }, [loadWallet]);
 
+  useEffect(() => () => {
+    if (musicTimerRef.current) window.clearInterval(musicTimerRef.current);
+    void audioContextRef.current?.close();
+  }, []);
+
+  function toggleMusic() {
+    if (musicOn) {
+      if (musicTimerRef.current) window.clearInterval(musicTimerRef.current);
+      musicTimerRef.current = null;
+      setMusicOn(false);
+      setToast("ARCADE RADIO MUTED");
+      return;
+    }
+
+    const context = getAudioContext();
+    playArcadePhrase(context);
+    musicTimerRef.current = window.setInterval(() => playArcadePhrase(context), 1600);
+    setMusicOn(true);
+    setToast("ARCADE RADIO: BARKWAVE FM");
+  }
+
+  function playNiaReaction(kind: "pet" | "treat") {
+    const context = getAudioContext();
+    if (kind === "pet") {
+      playBark(context, 0, 155);
+      playBark(context, 0.25, 175);
+      playBark(context, 0.48, 165);
+    } else {
+      playBark(context, 0, 185);
+      playBark(context, 0.22, 145);
+    }
+  }
+
   function changeTheme(next: Theme) {
     setTheme(next);
     window.localStorage.setItem("nia-theme", next);
@@ -87,6 +181,7 @@ export default function Home() {
       if (!response.ok) throw new Error(result.error || "Nia action failed");
       setWallet(result.wallet);
       setToast(kind === "pet" ? "YOU PET NIA!!! EXCELLENT FORM." : "CRONCH ACHIEVED. GOOD HUMAN.");
+      playNiaReaction(kind);
     } catch (error) {
       setToast(error instanceof Error ? error.message.toUpperCase() : "PLEASE TRY AGAIN");
     } finally {
@@ -121,6 +216,9 @@ export default function Home() {
         <div className="live-pill"><i /> LIVE NOW: THE INTERNET&apos;S VERY GOOD GIRL</div>
         <button className="wallet" onClick={() => setShopOpen(true)} aria-label={`${wallet.tokens} tokens. Buy more tokens.`}>
           <span className="coin">N</span> {wallet.tokens} TOKENS
+        </button>
+        <button className="sound-toggle" onClick={toggleMusic} aria-pressed={musicOn} aria-label={`${musicOn ? "Mute" : "Play"} arcade music`}>
+          {musicOn ? "♫ MUSIC ON" : "♪ PLAY MUSIC"}
         </button>
         <button className="buy-top" onClick={() => setShopOpen(true)}>BUY TOKENS</button>
       </header>
@@ -198,6 +296,7 @@ export default function Home() {
       <section className="how-it-works">
         <p className="section-kicker">WELCOME TO THE WORLD WIDE WOOF</p>
         <h2>Insert coin. Make Nia happy.</h2>
+        <p className="real-world-good">Every token purchase helps turn internet clicks into <strong>real-life pets and real treats for Nia.</strong></p>
         <div className="steps">
           <article><span>01</span><h3>GET TOKENS</h3><p>Choose a token pack using secure checkout.</p></article>
           <article><span>02</span><h3>PET OR TREAT</h3><p>Spend tokens to trigger a certified Nia reaction.</p></article>
@@ -205,7 +304,7 @@ export default function Home() {
         </div>
       </section>
 
-      <footer>© 1999–FOREVER NIA.NET · BEST VIEWED WITH LOVE · <button onClick={() => setShopOpen(true)}>TOKEN SHOP</button></footer>
+      <footer>© 1999–FOREVER <a href="https://hizach.com">HIZACH.COM</a> · BEST VIEWED WITH LOVE · <button onClick={() => setShopOpen(true)}>TOKEN SHOP</button></footer>
 
       {shopOpen && (
         <div className="modal-backdrop" onMouseDown={(event) => event.target === event.currentTarget && setShopOpen(false)}>
@@ -214,6 +313,7 @@ export default function Home() {
             <p className="section-kicker">NIA TOKEN MOTHERSHIP</p>
             <h2 id="shop-title">Choose your boop budget</h2>
             <p>Tokens live on this device. Each pet costs 1; each treat costs 3.</p>
+            <p className="token-good-note">♥ Your purchase helps fund actual pets and actual treats for the very real Nia.</p>
             <div className="packs">
               {packs.map((pack) => (
                 <button key={pack.id} className={pack.featured ? "featured" : ""} disabled={busy} onClick={() => buyPack(pack.id)}>
