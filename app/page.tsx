@@ -18,22 +18,65 @@ const packs = [
   { id: "nia-whale", tokens: 50, price: "$7.99", note: "Unreasonable generosity" },
 ];
 
-const arcadeNotes = [261.63, 329.63, 392, 523.25, 392, 659.25, 523.25, 392];
+const arcadeBeat = 0.22;
+const arcadeMelody = [
+  523.25, 659.25, 783.99, 1046.5, 783.99, 659.25, 587.33, 659.25,
+  698.46, 880, 1046.5, 1174.66, 1046.5, 880, 783.99, 698.46,
+  659.25, 783.99, 987.77, 1318.51, 1174.66, 987.77, 880, 783.99,
+  698.46, 783.99, 880, 1046.5, 880, 783.99, 698.46, 587.33,
+  523.25, 659.25, 783.99, 880, 987.77, 880, 783.99, 659.25,
+  587.33, 698.46, 783.99, 1046.5, 880, 783.99, 659.25, 523.25,
+];
+const arcadeBass = [130.81, 174.61, 146.83, 196, 164.81, 220, 146.83, 196, 130.81, 174.61, 146.83, 130.81];
+const arcadePhraseMilliseconds = arcadeMelody.length * arcadeBeat * 1000;
 
-function playArcadePhrase(context: AudioContext) {
-  const start = context.currentTime;
-  arcadeNotes.forEach((frequency, index) => {
-    const oscillator = context.createOscillator();
-    const gain = context.createGain();
-    oscillator.type = index % 2 ? "square" : "triangle";
-    oscillator.frequency.value = frequency;
-    gain.gain.setValueAtTime(0.0001, start + index * 0.17);
-    gain.gain.exponentialRampToValueAtTime(0.035, start + index * 0.17 + 0.015);
-    gain.gain.exponentialRampToValueAtTime(0.0001, start + index * 0.17 + 0.13);
-    oscillator.connect(gain).connect(context.destination);
-    oscillator.start(start + index * 0.17);
-    oscillator.stop(start + index * 0.17 + 0.15);
+function scheduleNote(context: AudioContext, destination: AudioNode, frequency: number, start: number, duration: number, volume: number, type: OscillatorType) {
+  const oscillator = context.createOscillator();
+  const gain = context.createGain();
+  oscillator.type = type;
+  oscillator.frequency.value = frequency;
+  gain.gain.setValueAtTime(0.0001, start);
+  gain.gain.exponentialRampToValueAtTime(volume, start + 0.015);
+  gain.gain.exponentialRampToValueAtTime(0.0001, start + duration);
+  oscillator.connect(gain).connect(destination);
+  oscillator.start(start);
+  oscillator.stop(start + duration + 0.01);
+}
+
+function playArcadePhrase(context: AudioContext, destination: AudioNode) {
+  const start = context.currentTime + 0.04;
+  arcadeMelody.forEach((frequency, index) => {
+    scheduleNote(context, destination, frequency, start + index * arcadeBeat, arcadeBeat * 0.82, 0.042, index % 4 === 3 ? "square" : "triangle");
+    if (index % 8 === 4) scheduleNote(context, destination, frequency / 2, start + index * arcadeBeat, arcadeBeat * 1.7, 0.018, "sine");
   });
+  arcadeBass.forEach((frequency, index) => {
+    scheduleNote(context, destination, frequency, start + index * arcadeBeat * 4, arcadeBeat * 2.8, 0.025, "square");
+  });
+}
+
+function playUnlockPulse(context: AudioContext) {
+  const oscillator = context.createOscillator();
+  const gain = context.createGain();
+  gain.gain.value = 0.0001;
+  oscillator.connect(gain).connect(context.destination);
+  oscillator.start();
+  oscillator.stop(context.currentTime + 0.01);
+}
+
+function createAudioContext() {
+  const SafariAudioContext = window.AudioContext || (window as typeof window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+  if (!SafariAudioContext) throw new Error("Audio is not supported in this browser");
+  return new SafariAudioContext();
+}
+
+function scheduleArcadeLoop(context: AudioContext, destination: AudioNode, timerRef: { current: number | null }) {
+  playArcadePhrase(context, destination);
+  timerRef.current = window.setTimeout(() => scheduleArcadeLoop(context, destination, timerRef), arcadePhraseMilliseconds);
+}
+
+function stopArcadeLoop(timerRef: { current: number | null }) {
+  if (timerRef.current) window.clearTimeout(timerRef.current);
+  timerRef.current = null;
 }
 
 function playBark(context: AudioContext, delay = 0, pitch = 150) {
@@ -79,12 +122,15 @@ export default function Home() {
   const [toast, setToast] = useState("NIA IS ONLINE");
   const [musicOn, setMusicOn] = useState(false);
   const audioContextRef = useRef<AudioContext | null>(null);
+  const musicGainRef = useRef<GainNode | null>(null);
   const musicTimerRef = useRef<number | null>(null);
 
-  const getAudioContext = useCallback(() => {
-    if (!audioContextRef.current) audioContextRef.current = new AudioContext();
-    if (audioContextRef.current.state === "suspended") void audioContextRef.current.resume();
-    return audioContextRef.current;
+  const unlockAudio = useCallback(async () => {
+    if (!audioContextRef.current || audioContextRef.current.state === "closed") audioContextRef.current = createAudioContext();
+    const context = audioContextRef.current;
+    playUnlockPulse(context);
+    if (context.state !== "running") await context.resume();
+    return context;
   }, []);
 
   const loadWallet = useCallback(async () => {
@@ -122,28 +168,37 @@ export default function Home() {
   }, [loadWallet]);
 
   useEffect(() => () => {
-    if (musicTimerRef.current) window.clearInterval(musicTimerRef.current);
+    stopArcadeLoop(musicTimerRef);
+    musicGainRef.current?.disconnect();
     void audioContextRef.current?.close();
   }, []);
 
-  function toggleMusic() {
+  async function toggleMusic() {
     if (musicOn) {
-      if (musicTimerRef.current) window.clearInterval(musicTimerRef.current);
-      musicTimerRef.current = null;
+      stopArcadeLoop(musicTimerRef);
+      musicGainRef.current?.disconnect();
+      musicGainRef.current = null;
       setMusicOn(false);
       setToast("ARCADE RADIO MUTED");
       return;
     }
 
-    const context = getAudioContext();
-    playArcadePhrase(context);
-    musicTimerRef.current = window.setInterval(() => playArcadePhrase(context), 1600);
-    setMusicOn(true);
-    setToast("ARCADE RADIO: BARKWAVE FM");
+    setToast("TUNING BARKWAVE FM...");
+    try {
+      const context = await unlockAudio();
+      const musicGain = context.createGain();
+      musicGain.gain.value = 0.8;
+      musicGain.connect(context.destination);
+      musicGainRef.current = musicGain;
+      scheduleArcadeLoop(context, musicGain, musicTimerRef);
+      setMusicOn(true);
+      setToast("ARCADE RADIO: BARKWAVE FM");
+    } catch {
+      setToast("TAP AGAIN TO UNLOCK THE ARCADE RADIO");
+    }
   }
 
-  function playNiaReaction(kind: "pet" | "treat") {
-    const context = getAudioContext();
+  function playNiaReaction(kind: "pet" | "treat", context: AudioContext) {
     if (kind === "pet") {
       playBark(context, 0, 155);
       playBark(context, 0.25, 175);
@@ -169,6 +224,7 @@ export default function Home() {
       return;
     }
 
+    const audioContextPromise = unlockAudio();
     setBusy(true);
     setReaction(kind);
     try {
@@ -181,7 +237,7 @@ export default function Home() {
       if (!response.ok) throw new Error(result.error || "Nia action failed");
       setWallet(result.wallet);
       setToast(kind === "pet" ? "YOU PET NIA!!! EXCELLENT FORM." : "CRONCH ACHIEVED. GOOD HUMAN.");
-      playNiaReaction(kind);
+      playNiaReaction(kind, await audioContextPromise);
     } catch (error) {
       setToast(error instanceof Error ? error.message.toUpperCase() : "PLEASE TRY AGAIN");
     } finally {
