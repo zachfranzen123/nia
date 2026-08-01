@@ -268,7 +268,7 @@ export default function Home() {
     <main className={`nia-site theme-${theme}`}>
       <div className="scanlines" aria-hidden="true" />
       <header className="topbar">
-        <a className="logo" href="#top" aria-label="Pet Nia home">NIA<span>.NET</span></a>
+        <a className="logo" href="#top" aria-label="Pet Nia home">PET<span>NIA!</span></a>
         <div className="live-pill"><i /> LIVE NOW: THE INTERNET&apos;S VERY GOOD GIRL</div>
         <button className="wallet" onClick={() => setShopOpen(true)} aria-label={`${wallet.tokens} tokens. Buy more tokens.`}>
           <span className="coin">N</span> {wallet.tokens} TOKENS
