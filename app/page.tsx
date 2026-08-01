@@ -13,9 +13,9 @@ const themes: Array<{ id: Theme; label: string; short: string }> = [
 ];
 
 const packs = [
-  { id: "snack-pack", tokens: 10, price: "$2.99", note: "A respectable number of boops" },
-  { id: "good-girl-pack", tokens: 25, price: "$4.99", note: "Most popular", featured: true },
-  { id: "nia-whale", tokens: 50, price: "$7.99", note: "Unreasonable generosity" },
+  { id: "snack-pack", tokens: 15, price: "$2.99", note: "Extra boops, on the house" },
+  { id: "good-girl-pack", tokens: 40, price: "$4.99", note: "Most popular", featured: true },
+  { id: "nia-whale", tokens: 100, price: "$7.99", note: "Unreasonable generosity" },
 ];
 
 const arcadeBeat = 0.22;
@@ -346,7 +346,7 @@ export default function Home() {
       </section>
 
       <section className="marquee" aria-label="Nia facts">
-        <div>★ 100% REAL NIA ★ NO AI DOGS ★ ONE VERY GOOD GIRL ★ {wallet.globalTreats.toLocaleString()} TREATS DISPENSED ★ BOOPS AVAILABLE 24/7 ★</div>
+        <div>★ 100% REAL NIA ★ ONE VERY GOOD GIRL ★ {wallet.globalTreats.toLocaleString()} TREATS DISPENSED ★ BOOPS AVAILABLE 24/7 ★</div>
       </section>
 
       <section className="how-it-works">

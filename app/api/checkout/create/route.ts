@@ -2,9 +2,9 @@ import { env } from "cloudflare:workers";
 import { ensureWallet, getWalletId, walletCookie } from "../../_lib/wallet";
 
 const packs = {
-  "snack-pack": { tokens: 10, amount: 299, name: "10 Nia Tokens" },
-  "good-girl-pack": { tokens: 25, amount: 499, name: "25 Nia Tokens" },
-  "nia-whale": { tokens: 50, amount: 799, name: "50 Nia Tokens" },
+  "snack-pack": { tokens: 15, amount: 299, name: "15 Nia Tokens" },
+  "good-girl-pack": { tokens: 40, amount: 499, name: "40 Nia Tokens" },
+  "nia-whale": { tokens: 100, amount: 799, name: "100 Nia Tokens" },
 } as const;
 
 export async function POST(request: Request) {
