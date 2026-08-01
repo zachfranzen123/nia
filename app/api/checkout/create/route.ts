@@ -27,7 +27,7 @@ export async function POST(request: Request) {
       "line_items[0][price_data][currency]": "usd",
       "line_items[0][price_data][unit_amount]": String(pack.amount),
       "line_items[0][price_data][product_data][name]": pack.name,
-      "line_items[0][price_data][product_data][description]": "Digital credits for pets and treats on Nia.net",
+      "line_items[0][price_data][product_data][description]": "Digital credits for pets and treats on nia.hizach.com",
       "metadata[wallet_id]": wallet.id,
       "metadata[tokens]": String(pack.tokens),
       "metadata[pack_id]": packId!,
