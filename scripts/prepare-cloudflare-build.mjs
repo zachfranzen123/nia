@@ -24,6 +24,8 @@ config.d1_databases = [
   },
 ];
 config.routes = [{ pattern: "nia.hizach.com", custom_domain: true }];
+// Page views go to live.hizach.com (the hizach-live Worker).
+config.services = [{ binding: "LIVE", service: "hizach-live", entrypoint: "LiveTap" }];
 config.observability = {
   enabled: true,
   logs: { head_sampling_rate: 1 },

@@ -1,10 +1,13 @@
 /** Cloudflare Worker entry point for the vinext-starter template. */
 import { handleImageOptimization, DEFAULT_DEVICE_SIZES, DEFAULT_IMAGE_SIZES } from "vinext/server/image-optimization";
 import handler from "vinext/server/app-router-entry";
+import { liveTap } from "./live-tap";
 
 interface Env {
   ASSETS: Fetcher;
   DB: D1Database;
+  /** live.hizach.com (hizach-live's LiveTap entrypoint): page views for the arrivals board. Production only. */
+  LIVE?: { record(hit: Record<string, unknown>): Promise<void> };
   IMAGES: {
     input(stream: ReadableStream): {
       transform(options: Record<string, unknown>): {
@@ -40,7 +43,9 @@ const worker = {
       }, allowedWidths);
     }
 
-    return handler.fetch(request, env, ctx);
+    const response = await handler.fetch(request, env, ctx);
+    liveTap(request, response, env, ctx, "nia");
+    return response;
   },
 };
 
